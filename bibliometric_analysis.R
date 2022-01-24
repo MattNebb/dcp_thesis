@@ -5,142 +5,78 @@ library(tm)
 library(pdftools)
 library(dplyr)
 
-setwd("C:/Users/matte/Desktop/MATTEO/wdirectory/bibliometric")
+#-----------------------------------------------------
+#>>>Bibliometric analysis of ACADEMIC PUBLICATIONS<<<<
+#-----------------------------------------------------
 
-#datasets
+#set your working directory with .bib bibliometric sources here!
+setwd("C:/yourfolder")
+
+###Datasets
+#WoS1 (Law+Economics)
 dfwos1 <- convert2df(file = "WOS1.bib", dbsource = "wos", format = "bibtex")
+#WoS_L (Law)
 dfwos1l <- convert2df(file = "WOS1L.bib", dbsource = "wos", format = "bibtex")
+#WoS_E (Economics)
 dfwos1e <- convert2df(file = "WOS1E.bib", dbsource = "wos", format = "bibtex")
+#WoS2 (All fields)
 dfwos2 <- convert2df(file = "WOS2.bib", dbsource = "wos", format = "bibtex")
 
-#-----------------------------------------------------
-##introduction of full texts
-setwd("C:/Users/matte/Desktop/MATTEO/wdirectory/bibliometric/test_pdf")
-#vector with all pdf in the folder
-files <- list.files(pattern = "pdf$")
-
-#extraction from pdf files
-texts <- lapply(files, pdf_text)
-
-#cleaning
-for (i in 1:length(texts)) {texts[[i]] <- gsub("(f|ht)tp(s?)://\\S+", " ", texts[[i]], perl=T)}
-for (i in 1:length(texts)) {texts[[i]] <- gsub("\r?\n|\r", " ", texts[[i]])}
-
-texts <- lapply(texts, removePunctuation)
-texts <- lapply(texts, removeNumbers)
-texts <- lapply(texts, tolower)
-texts <- lapply(texts, stripWhitespace)
-#texts <- lapply(texts, stemDocument)
-stop <- stopwords(kind = "en")
-texts <- lapply(texts, removeWords, "stop")
-
-#full text column in data frame
-for (i in 1:length(texts)) {df$text[i] <- texts[i]}
-
-setwd("C:/Users/matte/Desktop/MATTEO/wdirectory/bibliometric")
-#------------------------------------------------------------------
-#descriptive analysis
-r_wos1 <- biblioAnalysis(dfwos1, sep = ";")
-summary(r_wos1)
-
+###Country productivity and most-cited publications 
+#[TABLE 5, TABLE 9]
 r_wos1l <- biblioAnalysis(dfwos1l, sep = ";")
 summary(r_wos1l)
 
+#[TABLE 6, TABLE 8]
 r_wos1e <- biblioAnalysis(dfwos1e, sep = ";")
 summary(r_wos1e)
 
+#[TABLE 7]
 r_wos2 <- biblioAnalysis(dfwos2, sep = ";")
 summary(r_wos2)
 
-r_split <- timeslice(dfwos2, breaks=c(1995, 2005))
-summary(r_split[1])
-
-S <- summary(object = results, k = 10, pause = FALSE)
-
-plot(x = results, k = 20, pause = FALSE)
-
-###Authors' Coupling
-NetMatrix <- biblioNetwork(dfwos1e, analysis = "coupling", network = "authors", sep = ";")
-net=networkPlot(NetMatrix,  normalize = "salton", weighted=NULL, n = 50, Title = "Authors' Coupling", type = "fruchterman",
-                size=5,size.cex=T,remove.multiple=TRUE, remove.isolates = T,label.n=50,label.cex=T)
-
-
-
-#coupling references
-NetMatrix <- biblioNetwork(dfwos1l, analysis = "coupling", network = "references", sep = ";")
-net=networkPlot(NetMatrix, n = 50, Title = "References Coupling (Law)", type = "fruchterman", size=T,
-                label.n=50, remove.multiple=T, labelsize=0.7, remove.isolates = T, size.cex=T)
-
-
-
-###Co-citation network
-
+###Co-citation networks
+#[FIGURE 5]
 NetMatrix <- biblioNetwork(dfwos1e, analysis = "co-citation", network = "references", sep = ";")
 net=networkPlot(NetMatrix, n = 50, Title = "References Coupling (Economics)", type = "fruchterman", size=T,
                 label.n=50, remove.multiple=T, labelsize=0.7, remove.isolates = T, size.cex=T)
 
+#[FIGURE 6]
 NetMatrix <- biblioNetwork(dfwos1l, analysis = "co-citation", network = "references", sep = ";")
 net=networkPlot(NetMatrix, n = 50, Title = "References Coupling (Law)", type = "fruchterman", size=T,
                 label.n=50, remove.multiple=T, labelsize=0.7, remove.isolates = T, size.cex=T)
 
-NetMatrix <- biblioNetwork(dfwos1e, analysis = "collaboration", network = "authors", sep = ";")
-net=networkPlot(NetMatrix, n = 200, Title = "Co-Citation Network", type = "fruchterman", size.cex=T, edgesize = 2,
-                label.n=100, remove.multiple=T, remove.isolates = T, label.cex=T)
-
-NetMatrix <- biblioNetwork(dfwos1l, analysis = "coupling", network = "authors", sep = ";")
-net=networkPlot(NetMatrix, n = 50, Title = "References Coupling", type = "fruchterman", size=T,
-                label.n=50, remove.multiple=T, labelsize=0.7, remove.isolates = T, size.cex=T)
-
-#COUPLING
-
-NetMatrix <- biblioNetwork(dfwos1e, analysis = "coupling", network = "references", sep = ";")
-net=networkPlot(NetMatrix, n = 50, Title = "References Coupling (Economics)", type = "fruchterman", size=T,
-                label.n=50, remove.multiple=T, labelsize=0.7, remove.isolates = T, size.cex=T)
-
-NetMatrix <- biblioNetwork(dfwos1l, analysis = "coupling", network = "references", sep = ";")
-net=networkPlot(NetMatrix, n = 50, Title = "References Coupling (Law)", type = "fruchterman", size=T,
-                label.n=50, remove.multiple=T, labelsize=0.7, remove.isolates = T, size.cex=T)
-
-NetMatrix <- biblioNetwork(dfwos1e, analysis = "coupling", network = "authors", sep = ";")
-net=networkPlot(NetMatrix, n = 50, Title = "Co-Citation Network", type = "fruchterman", size.cex=T, edgesize = 2,
-                label.n=100, remove.multiple=T, remove.isolates = T, label.cex=T)
-
-NetMatrix <- biblioNetwork(dfwos1l, analysis = "coupling", network = "authors", sep = ";")
-net=networkPlot(NetMatrix, n = 50, Title = "References Coupling", type = "fruchterman", size=T,
-                label.n=50, remove.multiple=T, labelsize=0.7, remove.isolates = T, size.cex=T)
-
-#--------------------------------------------------------------------------
-### CO-WORD ANALYSIS:
-
-#Keyword co-occurrences network
-
-ac <-c("consumer", "consumers", "competition", "antitrust", "market")
-
-#FREQUENCY WORDS
-frequencyl1 <- termExtraction(
-  dfwos1l,
-  Field = "AB",
+###Word frequencies
+##KEYWORDS
+#[TABLE 12]
+frequencye_k <- termExtraction(
+  dfwos1e,
+  Field = "DE",
   ngrams = 1,
   stemming = FALSE,
   remove.numbers = TRUE,
-  remove.terms = c(stopwords(kind = "en"), ac),
-)
-frequencyl2 <- termExtraction(
-  dfwos1l,
-  Field = "AB",
-  ngrams = 2,
-  stemming = FALSE,
-  remove.numbers = TRUE,
-  remove.terms = c(stopwords(kind = "en"), ac),
+  remove.terms = c(stopwords(kind = "en"))
 )
 
+#[TABLE 13]
+frequencyl_k <- termExtraction(
+  dfwos1l,
+  Field = "DE",
+  ngrams = 1,
+  stemming = FALSE,
+  remove.numbers = TRUE,
+  remove.terms = c(stopwords(kind = "en")),
+)
+
+##ABSTRACTS
+#[TABLE 14]
 frequencye1 <- termExtraction(
   dfwos1e,
   Field = "AB",
   ngrams = 1,
   stemming = FALSE,
   remove.numbers = TRUE,
-  remove.terms = c(stopwords(kind = "en"), ac)
+  remove.terms = c(stopwords(kind = "en"))
 )
 frequencye2 <- termExtraction(
   dfwos1e,
@@ -150,70 +86,107 @@ frequencye2 <- termExtraction(
   remove.numbers = TRUE,
   remove.terms = stopwords(kind = "en")
 )
-extr <- cbind(extr1,extr2,extr3)
-rm(extr1)
-rm(extr2)
-rm(extr3)
 
-NetMatrix <- biblioNetwork(extr, analysis = "co-occurrences", network = "abstracts", sep = ";", short = TRUE)
-
-NetMatrix <- biblioNetwork(dfwos2, analysis = "co-occurrences", network = "keywords", sep = ";", short = TRUE)
-
-#net=networkPlot(NetMatrix, normalize="association", weighted=T, n = 30, Title = "Keyword Co-occurrences", 
-#               type = "fruchterman", size.cex = T, size=20, edgesize = 10,labelsize=2, label.cex = TRUE, edges.min = 2)
-net=networkPlot(NetMatrix, normalize="association", weighted=T, n = 100, Title = "Keyword Co-occurrences", 
-                type = "fruchterman", size=2, edgesize = 3,labelsize=1, size.cex=T)#, edges.min = 2)
-
-
-
-###Conceptual Structure using keywords
-
-#CS <- conceptualStructure(df,field="ID", method="MCA", minDegree=4, clust="auto", stemming=TRUE, labelsize=10, documents=10)
-CS <- conceptualStructure(extr,field="AB", method="CA", minDegree=40, clust="auto", stemming=FALSE, labelsize=8, documents=15) #ID
-#graphics:
-CS$graph_terms
-CS$graph_dendogram
-CS$graph_documents_Contrib
-CS$graph_documents_TC
-CS$docCoord
-
-#historiogram
-options(width=130)
-histResults <- histNetwork(dfwos1l, min.citations = 1, sep = ";")
-net <- histPlot(histResults, n=30, size = 30, labelsize=5)
-
-#-----------------------
-#Keyword Taxonomy (TO DELETE)
-#combination of 2 words tokens thata appear more than 10 times in abstracts
-
-tax2a <- termExtraction(
-  dftax,
+#[TABLE 15]
+frequencyl1 <- termExtraction(
+  dfwos1l,
+  Field = "AB",
+  ngrams = 1,
+  stemming = FALSE,
+  remove.numbers = TRUE,
+  remove.terms = c(stopwords(kind = "en")),
+)
+frequencyl2 <- termExtraction(
+  dfwos1l,
   Field = "AB",
   ngrams = 2,
   stemming = FALSE,
   remove.numbers = TRUE,
-  remove.terms = stopwords(kind = "en")
+  remove.terms = c(stopwords(kind = "en")),
 )
 
 
-taxt1 <-tax2a$AB_TM
-taxt1 <- gsub(";", " ", taxt1)
 
-vs <- VectorSource(taxt1)
-corp <-Corpus(vs)
-corp <-tm_map(corp, removePunctuation)
-corp <-tm_map(corp, removeWords, stopwords("en"))
+#----------------------------------------------
+#>>>Bibliometric analysis of POLICY PAPERS<<<<
+#----------------------------------------------
 
-dtm <- DocumentTermMatrix(corp)
-dtm2 <- as.matrix(dtm)
-frequency <- colSums(dtm2)
-frequency <- sort(frequency, decreasing=TRUE)
-freqm <- frequency > 9
-res <- frequency[freqm]
+###Extraction of policy reports' texts from pdf
+#set your working directory here!
+setwd("C:/yourfolder")
+files <- list.files(pattern = "pdf$")
+texts <- lapply(files, pdf_text)
 
+#Cleaning of texts
+for (i in 1:length(texts)) {texts[[i]] <- gsub("(f|ht)tp(s?)://\\S+", " ", texts[[i]], perl=T)}
+for (i in 1:length(texts)) {texts[[i]] <- gsub("\r?\n|\r", " ", texts[[i]])}
+texts <- lapply(texts, removePunctuation)
+texts <- lapply(texts, removeNumbers)
+texts <- lapply(texts, tolower)
+texts <- lapply(texts, stripWhitespace)
+stop <- stopwords(kind = "en")
+texts <- lapply(texts, removeWords, stop)
 
-#-----------------------
-#Summary
-an <- biblioAnalysis(tax1a)
-results  <- summary(an)
+#elimination of additional stepwords
+void <- c("can", "may", "also", "use", "will", "see", "however", "number", 
+          "particular", "whether", "including", "many", "based", "need", "make", "using", "likely",
+          "well", "within", "page", "able", "way", "part", "found", "must", "made", "often", "due",
+          "take", "across", "since", "already", "rather", "now")
+texts <- lapply(texts, removeWords, void)
 
+corpus <- VCorpus(VectorSource(texts))
+funs <- list(stripWhitespace,
+             removePunctuation, 
+             function(x) removeWords(x, stopwords("english")),
+             content_transformer(tolower))
+corpus <- tm_map(corpus, FUN = tm_reduce, tmFuns = funs)
+
+###Tokenisation of texts
+#Generate X-word ngrams
+ngram_token1 <-  function(x) unlist(lapply(ngrams(words(x), 1), paste, collapse=" "), use.names=FALSE)
+ngram_token2 <-  function(x) unlist(lapply(ngrams(words(x), 2), paste, collapse=" "), use.names=FALSE)
+ngram_token3 <-  function(x) unlist(lapply(ngrams(words(x), 3), paste, collapse=" "), use.names=FALSE)
+
+###Pass into TDM control argument
+#1-word tokens
+tdm1 <- TermDocumentMatrix(corpus, control = list(tokenize = ngram_token1))
+freq1 <- rowSums(as.matrix(tdm1))
+freq1 <- sort(freq1, decreasing=TRUE)
+tdm_freq1 <- data.frame(term = names(freq1), occurrences = freq1)
+
+#2-word tokens
+tdm2 <- TermDocumentMatrix(corpus, control = list(tokenize = ngram_token2))
+freq2 <- rowSums(as.matrix(tdm2))
+freq2 <- sort(freq2, decreasing=TRUE)
+tdm_freq2 <- data.frame(term = names(freq2), occurrences = freq2)
+
+#3-word tokens
+tdm3 <- TermDocumentMatrix(corpus, control = list(tokenize = ngram_token3))
+freq3 <- rowSums(as.matrix(tdm3))
+freq3 <- sort(freq3, decreasing=TRUE)
+tdm_freq3 <- data.frame(term = names(freq3), occurrences = freq3)
+
+#Order tokens according to their frequencies 
+#1-word tokens
+frequ1 <- rowSums(as.matrix(tdm1))
+frequ1 <- sort(frequ1, decreasing=TRUE)
+tdm_frequ1 <- data.frame(term = names(frequ1), occurrences = frequ1)
+dataset1 <- as.data.frame(tdm_frequ1)
+
+#2-word tokens
+frequ2 <- rowSums(as.matrix(tdm2))
+frequ2 <- sort(frequ2, decreasing=TRUE)
+tdm_frequ2 <- data.frame(term = names(frequ2), occurrences = frequ2)
+dataset2 <- as.data.frame(tdm_frequ2)
+
+#3-word tokens
+frequ3 <- rowSums(as.matrix(tdm3))
+frequ3 <- sort(frequ3, decreasing=TRUE)
+tdm_frequ3 <- data.frame(term = names(frequ3), occurrences = frequ3)
+dataset3 <- as.data.frame(tdm_frequ3)
+
+#Visualization
+#[TABLE 16, TABLE 17]
+tdm_frequ1
+tdm_frequ2
+tdm_frequ3
